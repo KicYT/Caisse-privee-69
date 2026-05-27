@@ -2,278 +2,923 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ma Caisse Privée</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Compte caisse v3.2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --primary: #2c3e50;
-            --accent: #27ae60;
-            --background: #f5f6fa;
+            --bg-primary: #f4f6f9;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --border-color: #e2e8f0;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            --radius: 18px;
+            --font-main: 'Fira Sans', sans-serif;
+            --transition: all 0.2s ease;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--background);
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #60a5fa;
+            --accent-green: #34d399;
+            --accent-red: #f87171;
+            --accent-purple: #c084fc;
+            --border-color: #334155;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 15px;
-            color: #333;
+            padding: 0;
+            font-family: var(--font-main);
+            -webkit-tap-highlight-color: transparent;
         }
-        h1, h2, h3 { color: var(--primary); margin-top: 0; }
-        .card {
-            background: white;
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
             padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
         }
-        .btn {
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
+
+        .app-container {
             width: 100%;
-            font-weight: bold;
+            max-width: 480px;
+            position: relative;
+            padding-bottom: 40px;
         }
-        .btn-secondary { background-color: #7f8c8d; }
-        .grid-monnaie {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
+
+        #notificationStack {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            max-width: 450px;
+            margin: 0 auto;
+            z-index: 2000;
+            pointer-events: none;
         }
-        .input-group {
+
+        .ios-notification {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 14px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            margin-bottom: 8px;
+            pointer-events: auto;
+            cursor: pointer;
+            animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .ios-notification h4 { font-weight: 700; color: var(--accent-red); font-size: 14px; text-decoration: underline; margin-bottom: 2px; }
+        .ios-notification p { font-size: 13px; color: var(--text-main); }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .title-area h1 { font-size: 24px; font-weight: 700; }
+        .title-area .date-display { font-size: 14px; color: var(--text-muted); }
+        .header-controls { display: flex; align-items: center; gap: 10px; }
+
+        .theme-toggle, .solde-badge {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            background: #f8f9fa;
-            padding: 8px;
-            border-radius: 6px;
+            justify-content: center;
         }
-        .input-group input {
-            width: 70px;
-            padding: 5px;
+
+        .theme-toggle { width: 44px; height: 44px; font-size: 18px; }
+        .solde-badge { padding: 0 14px; height: 44px; font-weight: 700; color: var(--accent-green); font-size: 16px; }
+
+        .main-nav {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .nav-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 12px 4px;
+            border-radius: var(--radius);
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--shadow);
             text-align: center;
-            font-size: 16px;
-        }
-        .hidden { display: none; }
-        .history-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
             font-size: 14px;
+            transition: var(--transition);
         }
-        .change-detail {
-            background: #e1f5fe;
-            padding: 10px;
-            border-left: 4px solid #0288d1;
-            margin-top: 10px;
-            border-radius: 4px;
+
+        .nav-btn.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+        .menu-section { display: none; }
+        .menu-section.active { display: block; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 15px;
         }
+
+        h2 { font-size: 18px; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .darker-block { background: var(--bg-primary); border-radius: var(--radius); padding: 14px; margin-top: 15px; }
+
+        .btn {
+            width: 100%; padding: 14px; border: none; border-radius: var(--radius);
+            font-weight: 600; font-size: 15px; cursor: pointer; display: flex;
+            justify-content: center; align-items: center; gap: 8px; margin-top: 10px; box-shadow: var(--shadow);
+        }
+        .btn-secondary { background: var(--text-muted); color: white; }
+        .btn-success { background: var(--accent-green); color: white; }
+        .btn-danger { background: var(--accent-red); color: white; }
+
+        .counter-grid { display: flex; flex-direction: column; gap: 10px; }
+        .counter-row { display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary); padding: 10px 14px; border-radius: var(--radius); }
+        .denom-label { font-weight: 600; width: 60px; font-size: 15px; }
+        .counter-controls { display: flex; align-items: center; gap: 10px; }
+        
+        .btn-count {
+            width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: var(--bg-card); color: var(--text-main); font-weight: 700; font-size: 16px; cursor: pointer;
+        }
+        .counter-controls input { width: 55px; text-align: center; padding: 5px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); border-radius: 6px; font-weight: 600; font-size: 15px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; padding: 15px; z-index: 1500;
+        }
+
+        .modal-card {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius);
+            width: 100%; max-width: 420px; padding: 22px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative; animation: popUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        .client-denom-card {
+            max-width: 360px;
+        }
+
+        @keyframes popUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-close { position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; }
+
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+        .input-group input, .input-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-main); border-radius: 10px; font-size: 15px; outline: none; }
+
+        .item-row { padding: 12px 14px; background: var(--bg-primary); border-radius: 10px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .time-link { text-decoration: underline; font-weight: 700; color: var(--accent-blue); cursor: pointer; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin-top: 10px; }
+        .calendar-header-day { font-weight: 700; color: var(--text-muted); font-size: 13px; }
+        .calendar-day { padding: 10px 0; background: var(--bg-primary); border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .calendar-day.has-shift { border-bottom: 3px solid var(--accent-blue); }
+        .calendar-day:empty { background: transparent; cursor: default; }
+
+        footer { text-align: center; font-size: 12px; color: var(--text-muted); opacity: 0.5; margin-top: 30px; font-weight: 300; }
     </style>
 </head>
 <body>
 
-    <h1>Gestionnaire de Caisse</h1>
+    <div class="app-container">
+        <div id="notificationStack"></div>
 
-    <div id="screen-home" class="card">
-        <h2>Mes Shifts</h2>
-        <button class="btn" onclick="startNewShift()">➕ Commencer un nouveau Shift</button>
-        <div id="history-list" style="margin-top: 20px;">
+        <header>
+            <div class="title-area">
+                <h1>Compte caisse</h1>
+                <div class="date-display" id="currentDate">-- -- ----</div>
             </div>
+            <div class="header-controls">
+                <div class="solde-badge" id="globalSoldeDisplay" style="display:none;" onclick="openSoldeDetails()">0.00 $</div>
+                <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <button class="nav-btn active" id="navShifts" onclick="switchTab('shifts')">Mes Shifts</button>
+            <button class="nav-btn" id="navNewShift" onclick="switchTab('new-shift')">Nouveau Shift</button>
+            <button class="nav-btn" id="navNotes" onclick="switchTab('notes')">Notes</button>
+            <button class="nav-btn" id="navTest" onclick="switchTab('test')" style="color:var(--accent-purple)">Test</button>
+        </nav>
+
+        <section id="section-shifts" class="menu-section active">
+            <div class="card">
+                <h2>Historique des Shifts</h2>
+                <ul style="list-style: none;" id="globalHistoryList"></ul>
+            </div>
+        </section>
+
+        <section id="section-new-shift" class="menu-section">
+            <div class="card" id="noActiveShiftCard">
+                <h2>Aucun shift en cours</h2>
+                <button class="btn btn-success" onclick="openOpeningModal(false)">⚡ Commencer un Shift</button>
+            </div>
+
+            <div class="card" id="activeShiftCard" style="display:none;">
+                <h2>Shift Actif</h2>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button class="nav-btn" style="background:rgba(16,185,129,0.1); color:var(--accent-green); border-color:var(--accent-green);" disabled>Caisse Sécurisée ✅</button>
+                    <button class="nav-btn" onclick="openOpeningModal(true)">🔄 Re-compter</button>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+                    <button class="btn btn-success" onclick="openTransactionModal()">➕ Transaction</button>
+                    <button class="btn btn-secondary" onclick="openContextualNoteModal()">📝 Note Express</button>
+                </div>
+
+                <button class="btn" onclick="openCorrectionModalView()" style="background: var(--accent-purple); color:white;">🔧 Section Corrections</button>
+                <button class="btn btn-danger" onclick="initiateClosingCount()" style="margin-top: 15px;">🔒 Fermer le Shift</button>
+
+                <div class="darker-block">
+                    <h3 style="font-size:14px; font-weight:700; margin-bottom:8px; color:var(--text-muted)">Transactions du jour</h3>
+                    <div id="liveTransactionsList"></div>
+                </div>
+
+                <div class="darker-block" style="margin-top:10px;">
+                    <h3 style="font-size:14px; font-weight:700; margin-bottom:8px; color:var(--text-muted)">Notes du Shift</h3>
+                    <div id="liveNotesList"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-notes" class="menu-section">
+            <div class="card">
+                <h2>Notes du Jour <button class="btn-count" style="width:auto; padding:0 10px;" onclick="openAddNoteFormModal('jour')">+</button></h2>
+                <div id="notesJourList"></div>
+            </div>
+        </section>
+
+        <section id="section-test" class="menu-section">
+            <div class="card">
+                <h2>Calendrier des Shifts</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <button class="btn-count" onclick="changeMonth(-1)">◀</button>
+                    <span id="calendarMonthYear" style="font-weight:700;"></span>
+                    <button class="btn-count" onclick="changeMonth(1)">▶</button>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+
+            <div class="card" style="border:1px dashed var(--accent-purple)">
+                <h2>Zone de Test</h2>
+                <button class="btn" style="background:var(--accent-purple); color:white" onclick="triggerTestAlert()">Simuler Alerte Caisse</button>
+                <button class="btn btn-secondary" style="background:var(--accent-purple); color:white; margin-top:8px;" onclick="resetTestSite()">Reset Test</button>
+            </div>
+        </section>
+
+        <footer>Fait avec amour par Gemini ❤</footer>
     </div>
 
-    <div id="screen-init" class="card hidden">
-        <h2>Comptage d'ouverture</h2>
-        <p>Entre la quantité de chaque coupure :</p>
-        <div class="grid-monnaie" id="init-cash-inputs">
+    <div class="modal-overlay" id="openingModal" onclick="handleOutsideClick(event, 'openingModal')">
+        <div class="modal-card">
+            <button class="modal-close" id="btnClosingOpeningModal" onclick="closeModalDirectly('openingModal')">✕</button>
+            <h2 id="openingModalTitle">Comptage de la Caisse</h2>
+            <div class="counter-grid" id="denomsContainer"></div>
+            <div style="margin-top:15px; font-weight:700; text-align:right; font-size:18px;">
+                Total : <span id="openingTotalCalc" style="color:var(--accent-green)">0.00 $</span>
             </div>
-        <button class="btn" onclick="saveInitialCount()">Valider l'ouverture</button>
+            <button class="btn btn-success" id="btnValidateOpening" onclick="validateOpening()">Valider</button>
+        </div>
     </div>
 
-    <div id="screen-dashboard" class="card hidden">
-        <h2 id="active-shift-title">Shift en cours</h2>
-        <h3 id="current-total-display">Total en caisse : 0.00$</h3>
-        
-        <hr>
-        
-        <h3>Nouvelle Transaction</h3>
-        <label>Total Facture ($) :</label>
-        <input type="number" id="tx-total-facture" step="0.01" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;"><br>
-        
-        <label>Total Donné par le client ($) :</label>
-        <input type="number" id="tx-total-client" step="0.01" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
-        
-        <label>Note pour cette transaction :</label>
-        <input type="text" id="tx-note" placeholder="Ex: Paiement client, Dépôt..." style="width:100%; padding:10px; margin-bottom:15px; box-sizing:border-box;">
+    <div class="modal-overlay" id="transactionModal" onclick="handleOutsideClick(event, 'transactionModal')">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModalDirectly('transactionModal')">✕</button>
+            <h2>Nouvelle Transaction</h2>
+            <div class="input-group"><label>Facture ($)</label><input type="number" step="0.01" id="txFacture" oninput="liveCalculateChange()"></div>
+            
+            <div class="input-group">
+                <label>Client Donne ($)</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="number" step="0.01" id="txDonne" oninput="liveCalculateChange()">
+                    <button class="btn-count" style="width:44px; height:44px; background:var(--accent-blue); color:white;" onclick="openClientDenomModal()">+</button>
+                </div>
+            </div>
 
-        <button class="btn" onclick="processTransaction()">Calculer la monnaie</button>
+            <div style="background: var(--bg-primary); padding:12px; border-radius:12px; margin-bottom:10px; text-align:center;">
+                <span style="font-size: 13px; color:var(--text-muted); display:block;">Rendre :</span>
+                <span style="font-size: 22px; font-weight:700; color:var(--accent-blue);" id="txMonnaieDisplay">0.00 $</span>
+                <div id="smartChangeDetail" style="margin-top:6px; font-size:12px; font-weight:600; font-style:italic;"></div>
+            </div>
+            <button class="btn btn-success" onclick="saveTransaction()">Enregistrer</button>
+        </div>
+    </div>
 
-        <div id="change-output" class="hidden"></div>
+    <div class="modal-overlay" id="clientDenomModal" onclick="handleOutsideClick(event, 'clientDenomModal')">
+        <div class="modal-card client-denom-card" style="z-index:1600;">
+            <button class="modal-close" onclick="closeModalDirectly('clientDenomModal')">✕</button>
+            <h2>Détail Argent Client</h2>
+            <div class="counter-grid" id="clientDenomsContainer"></div>
+            <div style="margin-top:15px; font-weight:700; text-align:right; font-size:18px;">
+                Total Client : <span id="clientTotalCalc" style="color:var(--accent-blue)">0.00 $</span>
+            </div>
+            <button class="btn btn-success" onclick="validateClientDenoms()">Appliquer ce montant</button>
+        </div>
+    </div>
 
-        <hr style="margin-top:20px;">
-        <h3>Notes du jour</h3>
-        <textarea id="day-notes" style="width:100%; height:60px;" placeholder="Écris tes notes globales ici..."></textarea>
-        <button class="btn btn-secondary" style="margin-top:5px;" onclick="saveDayNotes()">Sauvegarder les notes</button>
+    <div class="modal-overlay" id="noteFormModal" onclick="handleOutsideClick(event, 'noteFormModal')">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModalDirectly('noteFormModal')">✕</button>
+            <h2 id="noteFormTitle">Écrire une Note</h2>
+            <div class="input-group"><textarea id="noteFormInput" rows="3" placeholder="Texte ici..."></textarea></div>
+            <button class="btn btn-success" onclick="submitNoteForm()">Enregistrer</button>
+        </div>
+    </div>
 
-        <hr style="margin-top:20px;">
-        <button class="btn" style="background-color: #c0392b;" onclick="endShift()">🔒 Terminer et Fermer la journée</button>
+    <div class="modal-overlay" id="detailsModal" onclick="handleOutsideClick(event, 'detailsModal')">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModalDirectly('detailsModal')">✕</button>
+            <h2 id="detailsModalTitle">Détails</h2>
+            <div id="detailsModalContent" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+            <button class="btn btn-secondary" onclick="closeModalDirectly('detailsModal')">Fermer</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="correctionModal" onclick="handleOutsideClick(event, 'correctionModal')">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModalDirectly('correctionModal')">✕</button>
+            <h2>Gestion des Corrections</h2>
+            <div id="correctionListContainer" style="display:flex; flex-direction:column; gap:8px; max-height:180px; overflow-y:auto; margin:10px 0;"></div>
+            <button class="btn btn-danger" onclick="applyCorrection()">Supprimer la sélection</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-card">
+            <h2>Clôture de Caisse Validée ! 🎉</h2>
+            <textarea id="reportTextarea" rows="10" readonly style="width:100%; padding:10px; font-family:var(--font-main); background:var(--bg-primary); color:var(--text-main); border-radius:10px; font-size:13px; margin:10px 0; resize:none;"></textarea>
+            <button class="btn btn-success" onclick="copyReportToClipboard()">📋 Copier le rapport</button>
+            <button class="btn btn-secondary" onclick="closeModalDirectly('reportModal')">Fermer</button>
+        </div>
     </div>
 
     <script>
-        // Configuration des coupures disponibles
         const DENOMINATIONS = [
-            { name: "100$", val: 100 }, { name: "50$", val: 50 }, { name: "20$", val: 20 },
-            { name: "10$", val: 10 }, { name: "5$", val: 5 }, { name: "2$", val: 2 },
-            { name: "1$", val: 1 }, { name: "0.25$", val: 0.25 }, { name: "0.10$", val: 0.10 },
-            { name: "0.05$", val: 0.05 }
+            { id: 'm100', value: 100, label: '100 $' },
+            { id: 'm50', value: 50, label: '50 $' },
+            { id: 'm20', value: 20, label: '20 $' },
+            { id: 'm10', value: 10, label: '10 $' },
+            { id: 'm5', value: 5, label: '5 $' },
+            { id: 'm2', value: 2, label: '2 $' },
+            { id: 'm1', value: 1, label: '1 $' },
+            { id: 'm25c', value: 0.25, label: '25 ¢' },
+            { id: 'm10c', value: 0.10, label: '10 ¢' },
+            { id: 'm5c', value: 0.05, label: '5 ¢' }
         ];
 
-        let database = JSON.parse(localStorage.getItem('caisse_db')) || { shifts: [] };
-        let currentShift = null;
+        let appState = { theme: 'light', activeShift: null, history: [], notesJour: [] };
+        let tempCounts = {};
+        let clientCounts = {};
+        let currentModalMode = 'opening'; 
+        let noteTargetMode = 'jour'; 
+        let currentCalDate = new Date();
+        let selectedCorrectionTxId = null;
 
-        // Générer les champs de saisie d'argent automatiquement
-        const initContainer = document.getElementById('init-cash-inputs');
-        DENOMINATIONS.forEach(den => {
-            initContainer.innerHTML += `
-                <div class="input-group">
-                    <label>${den.name}</label>
-                    <input type="number" id="init-${den.val}" value="0" min="0">
-                </div>
-            `;
-        });
+        window.onload = function() {
+            loadState();
+            initDate();
+            buildDenominationDOM();
+            buildClientDenominationDOM();
+            renderApp();
+            renderCalendar();
+        };
 
-        function updateStorage() {
-            localStorage.setItem('caisse_db', JSON.stringify(database));
-            renderHistory();
+        function initDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('fr-CA', options);
         }
 
-        function renderHistory() {
-            const list = document.getElementById('history-list');
-            list.innerHTML = database.shifts.length === 0 ? "<p>Aucun historique disponible.</p>" : "";
-            database.shifts.forEach((s, idx) => {
-                list.innerHTML += `
-                    <div class="history-item">
-                        <strong>Shift du ${s.date}</strong><br>
-                        Ouverture: ${s.totalInitiel.toFixed(2)}$ | En cours/Final: ${s.totalActuel.toFixed(2)}$<br>
-                        <small>Notes: ${s.notes || 'Aucune'}</small>
+        function loadState() {
+            const data = localStorage.getItem('caisse_v3_state');
+            if (data) {
+                appState = JSON.parse(data);
+                document.documentElement.setAttribute('data-theme', appState.theme);
+                document.getElementById('themeBtn').innerText = appState.theme === 'light' ? '🌙' : '☀️';
+            }
+        }
+
+        function saveState() { localStorage.setItem('caisse_v3_state', JSON.stringify(appState)); }
+
+        function buildDenominationDOM() {
+            const container = document.getElementById('denomsContainer');
+            container.innerHTML = '';
+            DENOMINATIONS.forEach(d => {
+                tempCounts[d.id] = 0;
+                const row = document.createElement('div');
+                row.className = 'counter-row';
+                row.innerHTML = `
+                    <span class="denom-label">${d.label}</span>
+                    <div class="counter-controls">
+                        <button class="btn-count" onclick="adjustCount('${d.id}', -1)">-</button>
+                        <input type="number" min="0" id="input-${d.id}" value="0" oninput="manualCountChange('${d.id}', this.value)">
+                        <button class="btn-count" onclick="adjustCount('${d.id}', 1)">+</button>
                     </div>
                 `;
+                container.appendChild(row);
             });
         }
 
-        function startNewShift() {
-            currentShift = {
-                id: Date.now(),
-                date: new Date().toLocaleDateString('fr-CA'),
-                caisse: {},
-                transactions: [],
-                totalInitiel: 0,
-                totalActuel: 0,
-                notes: ""
-            };
-            DENOMINATIONS.forEach(d => currentShift.caisse[d.val] = 0);
-            
-            document.getElementById('screen-home').classList.add('hidden');
-            document.getElementById('screen-init').classList.remove('hidden');
-        }
-
-        function saveInitialCount() {
-            let total = 0;
+        function buildClientDenominationDOM() {
+            const container = document.getElementById('clientDenomsContainer');
+            container.innerHTML = '';
             DENOMINATIONS.forEach(d => {
-                let qty = parseInt(document.getElementById(`init-${d.val}`).value) || 0;
-                currentShift.caisse[d.val] = qty;
-                total += qty * d.val;
+                clientCounts[d.id] = 0;
+                const row = document.createElement('div');
+                row.className = 'counter-row';
+                row.innerHTML = `
+                    <span class="denom-label">${d.label}</span>
+                    <div class="counter-controls">
+                        <button class="btn-count" onclick="adjustClientCount('${d.id}', -1)">-</button>
+                        <input type="number" min="0" id="clientInput-${d.id}" value="0" oninput="manualClientCountChange('${d.id}', this.value)">
+                        <button class="btn-count" onclick="adjustClientCount('${d.id}', 1)">+</button>
+                    </div>
+                `;
+                container.appendChild(row);
             });
-            currentShift.totalInitiel = total;
-            currentShift.totalActuel = total;
-
-            document.getElementById('screen-init').classList.add('hidden');
-            document.getElementById('screen-dashboard').classList.remove('hidden');
-            updateDashboard();
         }
 
-        function updateDashboard() {
-            document.getElementById('current-total-display').innerText = `Total en caisse : ${currentShift.totalActuel.toFixed(2)}$`;
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.menu-section').forEach(s => s.classList.remove('active'));
+            if(tabId === 'shifts') document.getElementById('navShifts').classList.add('active');
+            if(tabId === 'new-shift') document.getElementById('navNewShift').classList.add('active');
+            if(tabId === 'notes') document.getElementById('navNotes').classList.add('active');
+            if(tabId === 'test') document.getElementById('navTest').classList.add('active');
+            document.getElementById(`section-${tabId}`).classList.add('active');
         }
 
-        function processTransaction() {
-            const facture = parseFloat(document.getElementById('tx-total-facture').value) || 0;
-            const client = parseFloat(document.getElementById('tx-total-client').value) || 0;
-            const note = document.getElementById('tx-note').value;
-            
-            if(client < facture) {
-                alert("Le montant du client est inférieur au total de la facture !");
+        function toggleTheme() {
+            appState.theme = appState.theme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', appState.theme);
+            document.getElementById('themeBtn').innerText = appState.theme === 'light' ? '🌙' : '☀️';
+            saveState();
+        }
+
+        function adjustCount(id, val) {
+            let current = parseInt(document.getElementById(`input-${id}`).value) || 0;
+            current = Math.max(0, current + val);
+            document.getElementById(`input-${id}`).value = current;
+            tempCounts[id] = current;
+            calculateOpeningTotal();
+        }
+
+        function manualCountChange(id, val) {
+            tempCounts[id] = Math.max(0, parseInt(val) || 0);
+            calculateOpeningTotal();
+        }
+
+        function calculateOpeningTotal() {
+            let total = 0;
+            DENOMINATIONS.forEach(d => { total += (tempCounts[d.id] || 0) * d.value; });
+            document.getElementById('openingTotalCalc').innerText = total.toFixed(2) + ' $';
+        }
+
+        function adjustClientCount(id, val) {
+            let current = parseInt(document.getElementById(`clientInput-${id}`).value) || 0;
+            current = Math.max(0, current + val);
+            document.getElementById(`clientInput-${id}`).value = current;
+            clientCounts[id] = current;
+            calculateClientTotal();
+        }
+
+        function manualClientCountChange(id, val) {
+            clientCounts[id] = Math.max(0, parseInt(val) || 0);
+            calculateClientTotal();
+        }
+
+        function calculateClientTotal() {
+            let total = 0;
+            DENOMINATIONS.forEach(d => { total += (clientCounts[d.id] || 0) * d.value; });
+            document.getElementById('clientTotalCalc').innerText = total.toFixed(2) + ' $';
+        }
+
+        function openClientDenomModal() {
+            DENOMINATIONS.forEach(d => {
+                document.getElementById(`clientInput-${d.id}`).value = 0;
+                clientCounts[d.id] = 0;
+            });
+            document.getElementById('clientTotalCalc').innerText = '0.00 $';
+            document.getElementById('clientDenomModal').style.display = 'flex';
+        }
+
+        function validateClientDenoms() {
+            let total = 0;
+            DENOMINATIONS.forEach(d => { total += (clientCounts[d.id] || 0) * d.value; });
+            document.getElementById('txDonne').value = total.toFixed(2);
+            closeModalDirectly('clientDenomModal');
+            liveCalculateChange();
+        }
+
+        function openOpeningModal(isRecomptage = false) {
+            currentModalMode = isRecomptage ? 'recomptage' : 'opening';
+            document.getElementById('openingModalTitle').innerText = isRecomptage ? "Re-comptage" : "Comptage initial";
+            document.getElementById('btnClosingOpeningModal').style.display = isRecomptage ? 'block' : 'none';
+            document.getElementById('openingModal').style.display = 'flex';
+            DENOMINATIONS.forEach(d => {
+                const val = (isRecomptage && appState.activeShift) ? (appState.activeShift.openingCounts[d.id] || 0) : 0;
+                document.getElementById(`input-${d.id}`).value = val;
+                tempCounts[d.id] = val;
+            });
+            calculateOpeningTotal();
+        }
+
+        function initiateClosingCount() {
+            currentModalMode = 'closing';
+            document.getElementById('openingModalTitle').innerText = "Comptage de fermeture";
+            document.getElementById('btnClosingOpeningModal').style.display = 'block';
+            document.getElementById('openingModal').style.display = 'flex';
+            DENOMINATIONS.forEach(d => { document.getElementById(`input-${d.id}`).value = 0; tempCounts[d.id] = 0; });
+            calculateOpeningTotal();
+        }
+
+        function validateOpening() {
+            let total = 0;
+            DENOMINATIONS.forEach(d => { total += (tempCounts[d.id] || 0) * d.value; });
+            if (total <= 0 && currentModalMode !== 'closing') {
+                alert("Erreur : Impossible de démarrer ou modifier un shift avec une caisse vide (0.00 $). Veuillez compter vos coupures.");
                 return;
             }
+            if(currentModalMode === 'opening') {
+                appState.activeShift = {
+                    id: Date.now(),
+                    dateISO: new Date().toISOString().split('T')[0],
+                    date: new Date().toLocaleDateString('fr-CA'),
+                    time: new Date().toLocaleTimeString('fr-CA', {hour:'2-digit', minute:'2-digit'}),
+                    openingTotal: total,
+                    openingCounts: { ...tempCounts },
+                    transactions: [],
+                    notes: []
+                };
+                pushNotification("Shift Ouvert", "Fond de caisse verrouillé.");
+            } else if(currentModalMode === 'recomptage') {
+                appState.activeShift.openingTotal = total;
+                appState.activeShift.openingCounts = { ...tempCounts };
+                pushNotification("Mise à jour", "Fond de caisse ajusté.");
+            } else if(currentModalMode === 'closing') {
+                closeShiftWithVerification(total);
+                closeModalDirectly('openingModal');
+                return;
+            }
+            closeModalDirectly('openingModal');
+            saveState();
+            renderApp();
+        }
 
-            let monnaieARendre = parseFloat((client - facture).toFixed(2));
-            let monnaieCopie = monnaieARendre;
-            let renduDetail = {};
-
-            // Algorithme intelligent pour rendre la monnaie selon ce qu'on a en caisse
-            DENOMINATIONS.forEach(d => {
-                if (monnaieCopie >= d.val && currentShift.caisse[d.val] > 0) {
-                    let besoin = Math.floor(monnaieCopie / d.val);
-                    let disponible = currentShift.caisse[d.val];
-                    let aPrendre = Math.min(besoin, disponible);
-
-                    if (aPrendre > 0) {
-                        renduDetail[d.name] = aPrendre;
-                        monnaieCopie = parseFloat((monnaieCopie - (aPrendre * d.val)).toFixed(2));
-                        currentShift.caisse[d.val] -= aPrendre; // Retire de la caisse
+        function liveCalculateChange() {
+            const fac = parseFloat(document.getElementById('txFacture').value) || 0;
+            const don = parseFloat(document.getElementById('txDonne').value) || 0;
+            const display = document.getElementById('txMonnaieDisplay');
+            const detailDiv = document.getElementById('smartChangeDetail');
+            if (don < fac || fac <= 0) { display.innerText = '0.00 $'; detailDiv.innerText = ''; return; }
+            let changeNeeded = parseFloat((don - fac).toFixed(2));
+            display.innerText = changeNeeded.toFixed(2) + ' $';
+            let breakdown = [];
+            for(let i=0; i<DENOMINATIONS.length; i++) {
+                let d = DENOMINATIONS[i];
+                if (changeNeeded >= d.value) {
+                    let qty = Math.floor(changeNeeded / d.value);
+                    if(qty > 0) {
+                        breakdown.push(`${qty}x [${d.label}]`);
+                        changeNeeded = parseFloat((changeNeeded - (qty * d.value)).toFixed(2));
                     }
                 }
+            }
+            detailDiv.innerText = breakdown.length > 0 ? "À rendre : " + breakdown.join(' | ') : "Compte juste.";
+        }
+
+        function openTransactionModal() {
+            document.getElementById('txFacture').value = '';
+            document.getElementById('txDonne').value = '';
+            document.getElementById('txMonnaieDisplay').innerText = '0.00 $';
+            document.getElementById('smartChangeDetail').innerText = '';
+            document.getElementById('transactionModal').style.display = 'flex';
+        }
+
+        function saveTransaction() {
+            const fac = parseFloat(document.getElementById('txFacture').value) || 0;
+            const don = parseFloat(document.getElementById('txDonne').value) || 0;
+            if (fac <= 0 || don < fac) return;
+            DENOMINATIONS.forEach(d => {
+                if(clientCounts[d.id]) {
+                    appState.activeShift.openingCounts[d.id] += clientCounts[d.id];
+                }
             });
-
-            // Alerte si on manque de change précis
-            if (monnaieCopie > 0) {
-                alert(`⚠️ Attention: Caisse sous-balancée! Il manque ${monnaieCopie}$ en monnaie exacte dans le tiroir pour compléter.`);
+            let changeNeeded = parseFloat((don - fac).toFixed(2));
+            let trackingMonnaieTab = [];
+            for(let i=0; i<DENOMINATIONS.length; i++) {
+                let d = DENOMINATIONS[i];
+                if (changeNeeded >= d.value) {
+                    let qty = Math.floor(changeNeeded / d.value);
+                    if(qty > 0) {
+                        appState.activeShift.openingCounts[d.id] = Math.max(0, appState.activeShift.openingCounts[d.id] - qty);
+                        trackingMonnaieTab.push(`${qty}x ${d.label}`);
+                        changeNeeded = parseFloat((changeNeeded - (qty * d.value)).toFixed(2));
+                    }
+                }
             }
+            appState.activeShift.transactions.push({
+                id: Date.now(),
+                time: new Date().toLocaleTimeString('fr-CA', {hour: '2-digit', minute:'2-digit'}),
+                facture: fac,
+                donne: don,
+                monnaie: don - fac,
+                detailsClient: { ...clientCounts },
+                detailsMonnaieString: trackingMonnaieTab.join(' | ') || "Aucune"
+            });
+            closeModalDirectly('transactionModal');
+            saveState();
+            renderApp();
+        }
 
-            // Ajouter l'argent reçu du client à la caisse (simulation simplifiée pour la V1)
-            // Dans un monde parfait on détaillerait ce que le client donne, ici on ajuste le total net
-            currentShift.totalActuel += (facture); 
+        function openContextualNoteModal() { openAddNoteFormModal('shift'); }
+        
+        function openAddNoteFormModal(type) {
+            noteTargetMode = type;
+            document.getElementById('noteFormTitle').innerText = type === 'jour' ? "Note du Jour" : "Note de Shift";
+            document.getElementById('noteFormInput').value = '';
+            document.getElementById('noteFormModal').style.display = 'flex';
+        }
 
-            // Sauvegarde de la transaction
-            currentShift.transactions.push({ facture, client, rendu: monnaieARendre, note });
-            
-            // Affichage du résultat
-            const output = document.getElementById('change-output');
-            output.classList.remove('hidden');
-            let detailTexte = `<strong>Monnaie totale à rendre : ${monnaieARendre.toFixed(2)}$</strong><br>Donner au client :<br>`;
-            for (let [nom, qte] of Object.entries(renduDetail)) {
-                detailTexte += `• ${qte}x de [${nom}]<br>`;
+        function submitNoteForm() {
+            const text = document.getElementById('noteFormInput').value.trim();
+            if(!text) return;
+            const item = { 
+                id: Date.now(), 
+                time: new Date().toLocaleTimeString('fr-CA', {hour:'2-digit', minute:'2-digit'}), 
+                text: text 
+            };
+            if(noteTargetMode === 'jour') appState.notesJour.push(item);
+            else if(appState.activeShift) appState.activeShift.notes.push(item);
+            closeModalDirectly('noteFormModal');
+            saveState();
+            renderApp();
+        }
+
+        function viewSingleNoteModal(time, text) {
+            document.getElementById('detailsModalTitle').innerText = `Note de ${time}`;
+            const content = document.getElementById('detailsModalContent');
+            content.innerHTML = `<p style="font-size:16px; line-height:1.4;">${text}</p>`;
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+
+        function closeShiftWithVerification(realCounted) {
+            const shift = appState.activeShift;
+            let totalTx = 0;
+            shift.transactions.forEach(t => totalTx += t.facture);
+            const theoreticalTotal = shift.openingTotal + totalTx;
+            const delta = realCounted - theoreticalTotal;
+            let report = `=== RAPPORT DE FIN DE SHIFT ===\n`;
+            report += `Session : ${shift.date} à ${shift.time}\n`;
+            report += `Fond initial : ${shift.openingTotal.toFixed(2)} $\n`;
+            report += `Ventes : +${totalTx.toFixed(2)} $\n`;
+            report += `Attendu : ${theoreticalTotal.toFixed(2)} $\n`;
+            report += `Réel compté : ${realCounted.toFixed(2)} $\n`;
+            report += `Écart : ${delta.toFixed(2)} $\n`;
+            document.getElementById('reportTextarea').value = report;
+            appState.history.unshift({ ...shift, closingTotal: realCounted, theoreticalTotal: theoreticalTotal, delta: delta, totalVolume: totalTx });
+            appState.activeShift = null;
+            saveState();
+            renderApp();
+            renderCalendar();
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+
+        function copyReportToClipboard() {
+            const tx = document.getElementById('reportTextarea');
+            tx.select();
+            document.execCommand('copy');
+            pushNotification("Succès", "Rapport copié !");
+            closeModalDirectly('reportModal');
+        }
+
+        function openCorrectionModalView() {
+            const container = document.getElementById('correctionListContainer');
+            container.innerHTML = '';
+            selectedCorrectionTxId = null;
+            if(!appState.activeShift || appState.activeShift.transactions.length === 0) { container.innerHTML = '<p style="text-align:center; font-size:13px; color:var(--text-muted);">Aucune transaction.</p>'; return; }
+            appState.activeShift.transactions.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'item-row';
+                div.innerHTML = `<label style="display:flex; align-items:center; gap:8px; width:100%; cursor:pointer;"><input type="radio" name="corr" value="${t.id}" onclick="selectedCorrectionTxId = ${t.id}"> <span>[${t.time}] Facture: ${t.facture.toFixed(2)} $</span></label>`;
+                container.appendChild(div);
+            });
+            document.getElementById('correctionModal').style.display = 'flex';
+        }
+
+        function applyCorrection() {
+            if(!selectedCorrectionTxId || !appState.activeShift) {
+                alert("Veuillez sélectionner une transaction à effacer.");
+                return;
             }
-            output.innerHTML = `<div class="change-detail">${detailTexte}</div>`;
-
-            // Reset des champs transaction
-            document.getElementById('tx-total-facture').value = "";
-            document.getElementById('tx-total-client').value = "";
-            document.getElementById('tx-note').value = "";
-
-            updateDashboard();
+            appState.activeShift.transactions = appState.activeShift.transactions.filter(t => t.id !== selectedCorrectionTxId);
+            closeModalDirectly('correctionModal');
+            pushNotification("Correction", "Transaction supprimée avec succès.");
+            saveState();
+            renderApp();
         }
 
-        function saveDayNotes() {
-            currentShift.notes = document.getElementById('day-notes').value;
-            alert("Notes sauvegardées pour ce shift !");
+        function openShiftHistoryDetails(id) {
+            const item = appState.history.find(h => h.id === id);
+            if(!item) return;
+            const content = document.getElementById('detailsModalContent');
+            let listHTML = item.transactions.map(t => {
+                let clientBkd = [];
+                DENOMINATIONS.forEach(d => {
+                    if(t.detailsClient && t.detailsClient[d.id]) clientBkd.push(`${t.detailsClient[d.id]}x ${d.label}`);
+                });
+                let clientStr = clientBkd.join(', ') || `${t.donne.toFixed(2)} $`;
+                return `<div style="border-bottom:1px solid var(--border-color); padding:6px 0;">
+                    <strong>[${t.time}] Facture : ${t.facture.toFixed(2)} $</strong><br>
+                    <span style="font-size:12px; color:var(--text-muted)">Donné client: ${clientStr}</span><br>
+                    <span style="font-size:12px; color:var(--accent-blue)">Monnaie remise: ${t.detailsMonnaieString || t.monnaie.toFixed(2) + ' $'}</span>
+                </div>`;
+            }).join('');
+            content.innerHTML = `
+                <p><strong>Ouverture :</strong> ${item.openingTotal.toFixed(2)} $</p>
+                <p><strong>Ventes :</strong> ${item.totalVolume.toFixed(2)} $</p>
+                <p><strong>Fermeture :</strong> ${item.closingTotal.toFixed(2)} $</p>
+                <p><strong>Écart :</strong> ${item.delta.toFixed(2)} $</p>
+                <div class="darker-block" style="max-height:200px; overflow-y:auto;">
+                    <strong>Fil conducteur détaillé :</strong>
+                    ${listHTML || '<div style="font-size:12px; color:var(--text-muted)">Aucune transaction.</div>'}
+                </div>
+            `;
+            document.getElementById('detailsModalTitle').innerText = `Shift du ${item.date}`;
+            document.getElementById('detailsModal').style.display = 'flex';
         }
 
-        function endShift() {
-            database.shifts.push(currentShift);
-            updateStorage();
-            
-            // Reset de l'interface
-            document.getElementById('screen-dashboard').classList.add('hidden');
-            document.getElementById('change-output').classList.add('hidden');
-            document.getElementById('day-notes').value = "";
-            document.getElementById('screen-home').classList.remove('hidden');
-            currentShift = null;
+        function openLiveTxDetails(id) {
+            if(!appState.activeShift) return;
+            const t = appState.activeShift.transactions.find(x => x.id === id);
+            if(!t) return;
+            const content = document.getElementById('detailsModalContent');
+            let clientBkd = [];
+            DENOMINATIONS.forEach(d => {
+                if(t.detailsClient && t.detailsClient[d.id]) clientBkd.push(`${t.detailsClient[d.id]}x ${d.label}`);
+            });
+            content.innerHTML = `
+                <p><strong>Montant Facture :</strong> ${t.facture.toFixed(2)} $</p>
+                <p><strong>Détail donné client :</strong> ${clientBkd.join(', ') || t.donne.toFixed(2) + ' $'}</p>
+                <p><strong>Détail monnaie remise :</strong> ${t.detailsMonnaieString || t.monnaie.toFixed(2) + ' $'}</p>
+            `;
+            document.getElementById('detailsModalTitle').innerText = `Transaction - ${t.time}`;
+            document.getElementById('detailsModal').style.display = 'flex';
         }
 
-        // Charger l'historique au démarrage
-        renderHistory();
+        function openSoldeDetails() {
+            if(!appState.activeShift) return;
+            document.getElementById('detailsModalTitle').innerText = "Inventaire théorique";
+            const content = document.getElementById('detailsModalContent');
+            content.innerHTML = '';
+            DENOMINATIONS.forEach(d => {
+                const qty = appState.activeShift.openingCounts[d.id] || 0;
+                content.innerHTML += `<div class="item-row"><span>${d.label}</span> <span>x${qty}</span></div>`;
+            });
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+
+        function pushNotification(title, text) {
+            const stack = document.getElementById('notificationStack');
+            const notif = document.createElement('div');
+            notif.className = 'ios-notification';
+            notif.innerHTML = `<h4>${title}</h4><p>${text}</p>`;
+            notif.onclick = () => notif.remove();
+            stack.appendChild(notif);
+            setTimeout(() => { if(notif) notif.remove(); }, 4000);
+        }
+
+        function triggerTestAlert() { pushNotification("Alerte caisse", "Test notification OK."); }
+
+        function resetTestSite() {
+            appState = { theme: 'light', activeShift: null, history: [], notesJour: [] };
+            localStorage.removeItem('caisse_v3_state');
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.getElementById('themeBtn').innerText = '🌙';
+            renderApp();
+            renderCalendar();
+            pushNotification("Reset", "Site de test réinitialisé.");
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            const year = currentCalDate.getFullYear();
+            const month = currentCalDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year}`;
+            ["D", "L", "M", "M", "J", "V", "S"].forEach(d => {
+                const div = document.createElement('div'); div.className = 'calendar-header-day'; div.innerText = d; grid.appendChild(div);
+            });
+            for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day';
+                cell.innerText = day;
+                const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const match = appState.history.find(h => h.dateISO === iso);
+                if (match) { cell.classList.add('has-shift'); cell.onclick = () => openShiftHistoryDetails(match.id); }
+                grid.appendChild(cell);
+            }
+        }
+
+        function changeMonth(val) { currentCalDate.setMonth(currentCalDate.getMonth() + val); renderCalendar(); }
+        function closeModalDirectly(id) { document.getElementById(id).style.display = 'none'; }
+        function handleOutsideClick(e, id) { if (e.target.id === id) closeModalDirectly(id); }
+
+        function renderApp() {
+            const badge = document.getElementById('globalSoldeDisplay');
+            if(appState.activeShift) {
+                document.getElementById('noActiveShiftCard').style.display = 'none';
+                document.getElementById('activeShiftCard').style.display = 'block';
+                let totalTx = 0;
+                appState.activeShift.transactions.forEach(t => totalTx += t.facture);
+                badge.innerText = (appState.activeShift.openingTotal + totalTx).toFixed(2) + ' $';
+                badge.style.display = 'flex';
+                const txContainer = document.getElementById('liveTransactionsList');
+                txContainer.innerHTML = '';
+                if(appState.activeShift.transactions.length === 0) {
+                    txContainer.innerHTML = '<p style="font-size:12px; color:var(--text-muted); text-align:center;">Aucune transaction.</p>';
+                } else {
+                    appState.activeShift.transactions.forEach(t => {
+                        const row = document.createElement('div');
+                        row.className = 'item-row';
+                        row.innerHTML = `<div><strong>${t.time}</strong> - Facture: ${t.facture.toFixed(2)} $</div><button class="btn-count" onclick="openLiveTxDetails(${t.id})">+</button>`;
+                        txContainer.appendChild(row);
+                    });
+                }
+                const noteContainer = document.getElementById('liveNotesList');
+                noteContainer.innerHTML = '';
+                if(appState.activeShift.notes.length === 0) {
+                    noteContainer.innerHTML = '<p style="font-size:12px; color:var(--text-muted); text-align:center;">Aucune note pour ce shift.</p>';
+                } else {
+                    appState.activeShift.notes.forEach(n => {
+                        const row = document.createElement('div');
+                        row.className = 'item-row';
+                        const escapedText = n.text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                        row.innerHTML = `
+                            <div><span class="time-link" onclick="viewSingleNoteModal('${n.time}', '${escapedText}')">${n.time}</span> - ${n.text.substring(0, 30)}${n.text.length > 30 ? '...' : ''}</div>
+                        `;
+                        noteContainer.appendChild(row);
+                    });
+                }
+            } else {
+                document.getElementById('noActiveShiftCard').style.display = 'block';
+                document.getElementById('activeShiftCard').style.display = 'none';
+                badge.style.display = 'none';
+            }
+            const histList = document.getElementById('globalHistoryList');
+            histList.innerHTML = '';
+            if(appState.history.length === 0) {
+                histList.innerHTML = '<li class="item-row">Aucun shift enregistré.</li>';
+            } else {
+                appState.history.forEach(h => {
+                    const li = document.createElement('li');
+                    li.className = 'item-row'; li.style.cursor = 'pointer';
+                    li.onclick = () => openShiftHistoryDetails(h.id);
+                    li.innerHTML = `<div><strong>${h.date}</strong></div> <strong>${h.closingTotal.toFixed(2)} $</strong>`;
+                    histList.appendChild(li);
+                });
+            }
+            const jList = document.getElementById('notesJourList'); jList.innerHTML = '';
+            appState.notesJour.forEach(n => { jList.innerHTML += `<div class="item-row"><div>${n.text}</div></div>`; });
+        }
     </script>
 </body>
 </html>
