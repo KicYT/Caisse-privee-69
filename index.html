@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma Caisse Privée</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #27ae60;
+            --background: #f5f6fa;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--background);
+            margin: 0;
+            padding: 15px;
+            color: #333;
+        }
+        h1, h2, h3 { color: var(--primary); margin-top: 0; }
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn-secondary { background-color: #7f8c8d; }
+        .grid-monnaie {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .input-group input {
+            width: 70px;
+            padding: 5px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .hidden { display: none; }
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .change-detail {
+            background: #e1f5fe;
+            padding: 10px;
+            border-left: 4px solid #0288d1;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Gestionnaire de Caisse</h1>
+
+    <div id="screen-home" class="card">
+        <h2>Mes Shifts</h2>
+        <button class="btn" onclick="startNewShift()">➕ Commencer un nouveau Shift</button>
+        <div id="history-list" style="margin-top: 20px;">
+            </div>
+    </div>
+
+    <div id="screen-init" class="card hidden">
+        <h2>Comptage d'ouverture</h2>
+        <p>Entre la quantité de chaque coupure :</p>
+        <div class="grid-monnaie" id="init-cash-inputs">
+            </div>
+        <button class="btn" onclick="saveInitialCount()">Valider l'ouverture</button>
+    </div>
+
+    <div id="screen-dashboard" class="card hidden">
+        <h2 id="active-shift-title">Shift en cours</h2>
+        <h3 id="current-total-display">Total en caisse : 0.00$</h3>
+        
+        <hr>
+        
+        <h3>Nouvelle Transaction</h3>
+        <label>Total Facture ($) :</label>
+        <input type="number" id="tx-total-facture" step="0.01" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;"><br>
+        
+        <label>Total Donné par le client ($) :</label>
+        <input type="number" id="tx-total-client" step="0.01" style="width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box;">
+        
+        <label>Note pour cette transaction :</label>
+        <input type="text" id="tx-note" placeholder="Ex: Paiement client, Dépôt..." style="width:100%; padding:10px; margin-bottom:15px; box-sizing:border-box;">
+
+        <button class="btn" onclick="processTransaction()">Calculer la monnaie</button>
+
+        <div id="change-output" class="hidden"></div>
+
+        <hr style="margin-top:20px;">
+        <h3>Notes du jour</h3>
+        <textarea id="day-notes" style="width:100%; height:60px;" placeholder="Écris tes notes globales ici..."></textarea>
+        <button class="btn btn-secondary" style="margin-top:5px;" onclick="saveDayNotes()">Sauvegarder les notes</button>
+
+        <hr style="margin-top:20px;">
+        <button class="btn" style="background-color: #c0392b;" onclick="endShift()">🔒 Terminer et Fermer la journée</button>
+    </div>
+
+    <script>
+        // Configuration des coupures disponibles
+        const DENOMINATIONS = [
+            { name: "100$", val: 100 }, { name: "50$", val: 50 }, { name: "20$", val: 20 },
+            { name: "10$", val: 10 }, { name: "5$", val: 5 }, { name: "2$", val: 2 },
+            { name: "1$", val: 1 }, { name: "0.25$", val: 0.25 }, { name: "0.10$", val: 0.10 },
+            { name: "0.05$", val: 0.05 }
+        ];
+
+        let database = JSON.parse(localStorage.getItem('caisse_db')) || { shifts: [] };
+        let currentShift = null;
+
+        // Générer les champs de saisie d'argent automatiquement
+        const initContainer = document.getElementById('init-cash-inputs');
+        DENOMINATIONS.forEach(den => {
+            initContainer.innerHTML += `
+                <div class="input-group">
+                    <label>${den.name}</label>
+                    <input type="number" id="init-${den.val}" value="0" min="0">
+                </div>
+            `;
+        });
+
+        function updateStorage() {
+            localStorage.setItem('caisse_db', JSON.stringify(database));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = database.shifts.length === 0 ? "<p>Aucun historique disponible.</p>" : "";
+            database.shifts.forEach((s, idx) => {
+                list.innerHTML += `
+                    <div class="history-item">
+                        <strong>Shift du ${s.date}</strong><br>
+                        Ouverture: ${s.totalInitiel.toFixed(2)}$ | En cours/Final: ${s.totalActuel.toFixed(2)}$<br>
+                        <small>Notes: ${s.notes || 'Aucune'}</small>
+                    </div>
+                `;
+            });
+        }
+
+        function startNewShift() {
+            currentShift = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString('fr-CA'),
+                caisse: {},
+                transactions: [],
+                totalInitiel: 0,
+                totalActuel: 0,
+                notes: ""
+            };
+            DENOMINATIONS.forEach(d => currentShift.caisse[d.val] = 0);
+            
+            document.getElementById('screen-home').classList.add('hidden');
+            document.getElementById('screen-init').classList.remove('hidden');
+        }
+
+        function saveInitialCount() {
+            let total = 0;
+            DENOMINATIONS.forEach(d => {
+                let qty = parseInt(document.getElementById(`init-${d.val}`).value) || 0;
+                currentShift.caisse[d.val] = qty;
+                total += qty * d.val;
+            });
+            currentShift.totalInitiel = total;
+            currentShift.totalActuel = total;
+
+            document.getElementById('screen-init').classList.add('hidden');
+            document.getElementById('screen-dashboard').classList.remove('hidden');
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            document.getElementById('current-total-display').innerText = `Total en caisse : ${currentShift.totalActuel.toFixed(2)}$`;
+        }
+
+        function processTransaction() {
+            const facture = parseFloat(document.getElementById('tx-total-facture').value) || 0;
+            const client = parseFloat(document.getElementById('tx-total-client').value) || 0;
+            const note = document.getElementById('tx-note').value;
+            
+            if(client < facture) {
+                alert("Le montant du client est inférieur au total de la facture !");
+                return;
+            }
+
+            let monnaieARendre = parseFloat((client - facture).toFixed(2));
+            let monnaieCopie = monnaieARendre;
+            let renduDetail = {};
+
+            // Algorithme intelligent pour rendre la monnaie selon ce qu'on a en caisse
+            DENOMINATIONS.forEach(d => {
+                if (monnaieCopie >= d.val && currentShift.caisse[d.val] > 0) {
+                    let besoin = Math.floor(monnaieCopie / d.val);
+                    let disponible = currentShift.caisse[d.val];
+                    let aPrendre = Math.min(besoin, disponible);
+
+                    if (aPrendre > 0) {
+                        renduDetail[d.name] = aPrendre;
+                        monnaieCopie = parseFloat((monnaieCopie - (aPrendre * d.val)).toFixed(2));
+                        currentShift.caisse[d.val] -= aPrendre; // Retire de la caisse
+                    }
+                }
+            });
+
+            // Alerte si on manque de change précis
+            if (monnaieCopie > 0) {
+                alert(`⚠️ Attention: Caisse sous-balancée! Il manque ${monnaieCopie}$ en monnaie exacte dans le tiroir pour compléter.`);
+            }
+
+            // Ajouter l'argent reçu du client à la caisse (simulation simplifiée pour la V1)
+            // Dans un monde parfait on détaillerait ce que le client donne, ici on ajuste le total net
+            currentShift.totalActuel += (facture); 
+
+            // Sauvegarde de la transaction
+            currentShift.transactions.push({ facture, client, rendu: monnaieARendre, note });
+            
+            // Affichage du résultat
+            const output = document.getElementById('change-output');
+            output.classList.remove('hidden');
+            let detailTexte = `<strong>Monnaie totale à rendre : ${monnaieARendre.toFixed(2)}$</strong><br>Donner au client :<br>`;
+            for (let [nom, qte] of Object.entries(renduDetail)) {
+                detailTexte += `• ${qte}x de [${nom}]<br>`;
+            }
+            output.innerHTML = `<div class="change-detail">${detailTexte}</div>`;
+
+            // Reset des champs transaction
+            document.getElementById('tx-total-facture').value = "";
+            document.getElementById('tx-total-client').value = "";
+            document.getElementById('tx-note').value = "";
+
+            updateDashboard();
+        }
+
+        function saveDayNotes() {
+            currentShift.notes = document.getElementById('day-notes').value;
+            alert("Notes sauvegardées pour ce shift !");
+        }
+
+        function endShift() {
+            database.shifts.push(currentShift);
+            updateStorage();
+            
+            // Reset de l'interface
+            document.getElementById('screen-dashboard').classList.add('hidden');
+            document.getElementById('change-output').classList.add('hidden');
+            document.getElementById('day-notes').value = "";
+            document.getElementById('screen-home').classList.remove('hidden');
+            currentShift = null;
+        }
+
+        // Charger l'historique au démarrage
+        renderHistory();
+    </script>
+</body>
+</html>
